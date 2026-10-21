@@ -1,1 +1,41 @@
- 
+name: Deploy static website
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  STORAGE_ACCOUNT: anamzstaticsite
+  # Folder that contains index.html. Use . if index.html is at the top of the repository.
+  SITE_DIR: .
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Sign in to Azure with OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare the site files
+        run: |
+          mkdir -p /tmp/site
+          cp -r "$SITE_DIR"/. /tmp/site/
+          rm -rf /tmp/site/.git /tmp/site/.github /tmp/site/README.md
+
+      - name: Upload to blob storage
+        run: az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --auth-mode key --destination '$web' --source /tmp/site --overwrite true
+
+      - name: Sign out of Azure
+        if: always()
+        run: az logout
