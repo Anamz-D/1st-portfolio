@@ -34,7 +34,7 @@ jobs:
           rm -rf /tmp/site/.git /tmp/site/.github /tmp/site/README.md
 
       - name: Upload to blob storage
-        run: az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --auth-mode key --destination '$web' --source /tmp/site --overwrite true
+        run: az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --auth-mode login --destination '$web' --source /tmp/site --overwrite true
 
       - name: Sign out of Azure
         if: always()
